@@ -313,7 +313,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     await update.message.reply_text(
         f"{etiquette_test()}"
         "✅ <b>Lien de paiement créé</b>\n\n"
-        f"Agent : {e(agent)}\n"
+        f"TeamLeader ou agent : {e(agent)}\n"
         f"Joueur : {e(joueur)}\n"
         f"Montant : {euros(montant)}\n"
         f"Référence : <code>{reference}</code>\n\n"
@@ -327,7 +327,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             ADMIN_CHAT_ID,
             f"{etiquette_test()}"
             "🆕 <b>Lien crypto créé</b>\n"
-            f"Agent : {e(agent)}\n"
+            f"TeamLeader ou agent : {e(agent)}\n"
             f"Joueur : {e(joueur)}\n"
             f"Montant : {euros(montant)}\n"
             f"Compte Telegram : {e(compte_telegram(user))}\n"
@@ -545,7 +545,7 @@ async def webhook_nowpayments(
                 ADMIN_CHAT_ID,
                 f"{marque}"
                 "💰 <b>Paiement crypto confirmé</b>\n"
-                f"Agent : {e(vente['agent'])}\n"
+                f"TeamLeader ou agent : {e(vente['agent'])}\n"
                 f"Joueur : {e(vente['joueur'])}\n"
                 f"Montant : {euros(vente['montant'])}\n"
                 f"Crypto : {e(crypto)}\n"
@@ -573,7 +573,7 @@ async def webhook_nowpayments(
         await _envoyer(
             ADMIN_CHAT_ID,
             "⚠️ <b>Paiement partiel</b> (le client a envoyé moins que prévu)\n"
-            f"Agent : {e(vente['agent'])}\n"
+            f"TeamLeader ou agent : {e(vente['agent'])}\n"
             f"Joueur : {e(vente['joueur'])}\n"
             f"Montant attendu : {euros(vente['montant'])}\n"
             f"Reçu : {e(paiement.get('actually_paid'))} {e(crypto)}\n"
