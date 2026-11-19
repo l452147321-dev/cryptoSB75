@@ -322,21 +322,6 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
-    try:
-        await context.bot.send_message(
-            ADMIN_CHAT_ID,
-            f"{etiquette_test()}"
-            "🆕 <b>Lien crypto créé</b>\n"
-            f"TeamLeader ou agent : {e(agent)}\n"
-            f"Joueur : {e(joueur)}\n"
-            f"Montant : {euros(montant)}\n"
-            f"Compte Telegram : {e(compte_telegram(user))}\n"
-            f"Référence : <code>{reference}</code>",
-            parse_mode=ParseMode.HTML,
-        )
-    except Exception:
-        log.exception("Message admin non envoyé (création)")
-
     context.user_data.clear()
     return ConversationHandler.END
 
