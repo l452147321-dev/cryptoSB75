@@ -54,13 +54,13 @@ log = logging.getLogger("bot")
 # Configuration
 # --------------------------------------------------------------------------- #
 
-TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"].strip()
 ADMIN_CHAT_ID = int(os.environ["ADMIN_CHAT_ID"])
 PUBLIC_URL = os.environ["PUBLIC_URL"].rstrip("/")
 if not PUBLIC_URL.startswith("http"):
     PUBLIC_URL = "https://" + PUBLIC_URL
-WEBHOOK_SECRET = os.environ["WEBHOOK_SECRET"]
-NOWPAYMENTS_API_KEY = os.environ["NOWPAYMENTS_API_KEY"]
+WEBHOOK_SECRET = os.environ["WEBHOOK_SECRET"].strip()
+NOWPAYMENTS_API_KEY = os.environ["NOWPAYMENTS_API_KEY"].strip()
 NOWPAYMENTS_IPN_SECRET = os.environ["NOWPAYMENTS_IPN_SECRET"]
 TEST_MODE = os.environ.get("TEST_MODE", "true").strip().lower() in ("1", "true", "yes", "oui")
 PAY_CURRENCY = os.environ.get("PAY_CURRENCY", "").strip().lower()
@@ -425,6 +425,14 @@ async def recap(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("\n".join(texte), parse_mode=ParseMode.HTML)
 
 
+async def identifiant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Donne l'identifiant de la conversation (utile pour régler ADMIN_CHAT_ID)."""
+    await update.message.reply_text(
+        f"Identifiant de cette conversation : <code>{update.effective_chat.id}</code>",
+        parse_mode=ParseMode.HTML,
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Application Telegram + serveur web
 # --------------------------------------------------------------------------- #
@@ -450,6 +458,7 @@ tg.add_handler(
 tg.add_handler(CommandHandler("annuler", annuler))
 tg.add_handler(CommandHandler("mesventes", mes_ventes))
 tg.add_handler(CommandHandler("recap", recap))
+tg.add_handler(CommandHandler("id", identifiant))
 
 
 @asynccontextmanager
@@ -556,6 +565,7 @@ async def webhook_nowpayments(
                 vente["tg_id"],
                 f"{marque}"
                 "💰 <b>Paiement confirmé</b>\n"
+                f"TeamLeader ou agent : {e(vente['agent'])}\n"
                 f"Joueur : {e(vente['joueur'])}\n"
                 f"Montant : {euros(vente['montant'])}\n"
                 f"Référence : <code>{reference}</code>",
