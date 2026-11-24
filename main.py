@@ -244,7 +244,7 @@ async def debut(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
     await update.message.reply_text(
         "👋 Nouvelle vente (paiement crypto).\n\n"
-        "Quel est ton nom d'agent ou TeamLeader ?\n\n"
+        "Quel est ton nom de TeamLeader ou d'Agent ?\n\n"
         "(/annuler pour arrêter)"
     )
     return AGENT
@@ -253,7 +253,7 @@ async def debut(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def recu_agent(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     nom = update.message.text.strip()
     if not 1 <= len(nom) <= 60:
-        await update.message.reply_text("Nom invalide. Renvoie ton nom d'agent ou TeamLeader.")
+        await update.message.reply_text("Nom invalide. Renvoie ton nom de TeamLeader ou d'Agent.")
         return AGENT
     context.user_data["agent"] = nom
     await update.message.reply_text("Nom du joueur ?")
@@ -266,7 +266,7 @@ async def recu_joueur(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         await update.message.reply_text("Nom invalide. Renvoie le nom du joueur.")
         return JOUEUR
     context.user_data["joueur"] = nom
-    await update.message.reply_text("Montant en euros ? (exemple : 150)")
+    await update.message.reply_text("Montant en euros ? (exemple : 100)")
     return MONTANT
 
 
@@ -275,7 +275,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     try:
         montant = round(float(brut), 2)
     except ValueError:
-        await update.message.reply_text("Montant invalide. Envoie seulement un nombre, exemple : 150")
+        await update.message.reply_text("Montant invalide. Envoie seulement un nombre, exemple : 100")
         return MONTANT
     if not MONTANT_MIN <= montant <= MONTANT_MAX:
         await update.message.reply_text(
@@ -313,7 +313,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     await update.message.reply_text(
         f"{etiquette_test()}"
         "✅ <b>Lien de paiement créé</b>\n\n"
-        f"TeamLeader ou agent : {e(agent)}\n"
+        f"TeamLeader ou Agent : {e(agent)}\n"
         f"Joueur : {e(joueur)}\n"
         f"Montant : {euros(montant)}\n"
         f"Référence : <code>{reference}</code>\n\n"
@@ -539,7 +539,7 @@ async def webhook_nowpayments(
                 ADMIN_CHAT_ID,
                 f"{marque}"
                 "💰 <b>Paiement crypto confirmé</b>\n"
-                f"TeamLeader ou agent : {e(vente['agent'])}\n"
+                f"TeamLeader ou Agent : {e(vente['agent'])}\n"
                 f"Joueur : {e(vente['joueur'])}\n"
                 f"Montant : {euros(vente['montant'])}\n"
                 f"Crypto : {e(crypto)}\n"
@@ -550,7 +550,7 @@ async def webhook_nowpayments(
                 vente["tg_id"],
                 f"{marque}"
                 "💰 <b>Paiement confirmé</b>\n"
-                f"TeamLeader ou agent : {e(vente['agent'])}\n"
+                f"TeamLeader ou Agent : {e(vente['agent'])}\n"
                 f"Joueur : {e(vente['joueur'])}\n"
                 f"Montant : {euros(vente['montant'])}\n"
                 f"Référence : <code>{reference}</code>",
@@ -568,7 +568,7 @@ async def webhook_nowpayments(
         await _envoyer(
             ADMIN_CHAT_ID,
             "⚠️ <b>Paiement partiel</b> (le client a envoyé moins que prévu)\n"
-            f"TeamLeader ou agent : {e(vente['agent'])}\n"
+            f"TeamLeader ou Agent : {e(vente['agent'])}\n"
             f"Joueur : {e(vente['joueur'])}\n"
             f"Montant attendu : {euros(vente['montant'])}\n"
             f"Reçu : {e(paiement.get('actually_paid'))} {e(crypto)}\n"
