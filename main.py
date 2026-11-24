@@ -2,7 +2,7 @@
 Bot Telegram de liens de paiement crypto (NOWPayments).
 
 Parcours en message privé :
-  /start ou /vente -> nom d'agent ou TeamLeader -> nom du joueur -> montant en euros
+  /start (ou /recommencer) -> nom d'agent ou TeamLeader -> nom du joueur -> montant en euros
   -> le bot renvoie un lien de paiement crypto à transmettre au client.
 
 Commandes : /start, /vente, /annuler, /mesventes, /recap [semaine|mois|tout] (admin)
@@ -245,7 +245,8 @@ async def debut(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "👋 Nouvelle vente (paiement crypto).\n\n"
         "Quel est ton nom de TeamLeader ou d'Agent ?\n\n"
-        "(/annuler pour arrêter)"
+        "/recommencer\n"
+        "/annuler"
     )
     return AGENT
 
@@ -296,7 +297,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     except Exception:
         log.exception("Échec de création de facture")
         await update.message.reply_text(
-            "❌ Impossible de créer le lien pour le moment. Réessaie avec /vente.\n"
+            "❌ Impossible de créer le lien pour le moment. Réessaie avec /start.\n"
             "Si le montant est très petit, essaie un montant plus élevé."
         )
         context.user_data.clear()
@@ -328,7 +329,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def annuler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
-    await update.message.reply_text("Annulé. Envoie /vente pour recommencer.")
+    await update.message.reply_text("Annulé. Envoie /start pour commencer.")
     return ConversationHandler.END
 
 
@@ -357,7 +358,7 @@ async def mes_ventes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             (user.id,),
         ).fetchone()
     if not lignes:
-        await update.message.reply_text("Aucune vente pour l'instant. Envoie /vente pour commencer.")
+        await update.message.reply_text("Aucune vente pour l'instant. Envoie /start pour commencer.")
         return
     texte = ["<b>Tes 15 dernières ventes</b>\n"]
     for v in lignes:
@@ -427,7 +428,7 @@ tg = Application.builder().token(TELEGRAM_BOT_TOKEN).updater(None).build()
 texte_simple = filters.TEXT & ~filters.COMMAND
 tg.add_handler(
     ConversationHandler(
-        entry_points=[CommandHandler(["start", "vente"], debut)],
+        entry_points=[CommandHandler(["start", "recommencer", "vente"], debut)],
         states={
             AGENT: [MessageHandler(texte_simple, recu_agent)],
             JOUEUR: [MessageHandler(texte_simple, recu_joueur)],
@@ -435,7 +436,7 @@ tg.add_handler(
         },
         fallbacks=[
             CommandHandler("annuler", annuler),
-            CommandHandler(["start", "vente"], debut),
+            CommandHandler(["start", "recommencer", "vente"], debut),
         ],
         allow_reentry=True,
     )
@@ -455,6 +456,13 @@ async def lifespan(_: FastAPI):
         url=f"{PUBLIC_URL}/webhook/telegram",
         secret_token=WEBHOOK_SECRET,
         allowed_updates=["message"],
+    )
+    await tg.bot.set_my_commands(
+        [
+            ("start", "Commencer"),
+            ("recommencer", "Recommencer"),
+            ("annuler", "Arrêter"),
+        ]
     )
     log.info("Bot démarré (mode %s) — API %s", "TEST" if TEST_MODE else "RÉEL", NOWPAYMENTS_API_URL)
     yield
@@ -588,3 +596,4 @@ async def _envoyer(chat_id: int, texte: str) -> None:
         await tg.bot.send_message(chat_id, texte, parse_mode=ParseMode.HTML)
     except Exception:
         log.exception("Message non envoyé à %s", chat_id)
+      
