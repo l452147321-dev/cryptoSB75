@@ -35,7 +35,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi import FastAPI, Header, HTTPException, Request
-from telegram import Update
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.constants import ChatType, ParseMode
 from telegram.ext import (
     Application,
@@ -81,6 +81,12 @@ MONTANT_MIN = 5.0
 MONTANT_MAX = 50000.0
 
 AGENT, JOUEUR, MONTANT = range(3)
+
+BOUTON_RECOMMENCER = "🔄 Recommencer"
+BOUTON_ANNULER = "❌ Annuler"
+CLAVIER = ReplyKeyboardMarkup(
+    [[BOUTON_RECOMMENCER, BOUTON_ANNULER]], resize_keyboard=True, is_persistent=True
+)
 
 # --------------------------------------------------------------------------- #
 # Base de données (SQLite)
@@ -244,9 +250,8 @@ async def debut(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
     await update.message.reply_text(
         "👋 Nouvelle vente (paiement crypto).\n\n"
-        "Quel est ton nom de TeamLeader ou d'Agent ?\n\n"
-        "/recommencer\n"
-        "/annuler"
+        "Quel est ton nom de TeamLeader ou d'Agent ?",
+        reply_markup=CLAVIER,
     )
     return AGENT
 
@@ -297,7 +302,7 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     except Exception:
         log.exception("Échec de création de facture")
         await update.message.reply_text(
-            "❌ Impossible de créer le lien pour le moment. Réessaie avec /start.\n"
+            "❌ Impossible de créer le lien pour le moment. Touche « Recommencer » pour réessayer.\n"
             "Si le montant est très petit, essaie un montant plus élevé."
         )
         context.user_data.clear()
@@ -329,7 +334,10 @@ async def recu_montant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def annuler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
-    await update.message.reply_text("Annulé. Envoie /start pour commencer.")
+    await update.message.reply_text(
+        "Annulé. Touche « Recommencer » pour créer un nouveau lien.",
+        reply_markup=CLAVIER if update.effective_chat.type == ChatType.PRIVATE else None,
+    )
     return ConversationHandler.END
 
 
@@ -425,10 +433,15 @@ async def identifiant(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 tg = Application.builder().token(TELEGRAM_BOT_TOKEN).updater(None).build()
 
-texte_simple = filters.TEXT & ~filters.COMMAND
+f_recommencer = filters.Regex(r"Recommencer\s*$")
+f_annuler = filters.Regex(r"Annuler\s*$")
+texte_simple = filters.TEXT & ~filters.COMMAND & ~f_recommencer & ~f_annuler
 tg.add_handler(
     ConversationHandler(
-        entry_points=[CommandHandler(["start", "recommencer", "vente"], debut)],
+        entry_points=[
+            CommandHandler(["start", "recommencer", "vente"], debut),
+            MessageHandler(f_recommencer, debut),
+        ],
         states={
             AGENT: [MessageHandler(texte_simple, recu_agent)],
             JOUEUR: [MessageHandler(texte_simple, recu_joueur)],
@@ -436,12 +449,15 @@ tg.add_handler(
         },
         fallbacks=[
             CommandHandler("annuler", annuler),
+            MessageHandler(f_annuler, annuler),
             CommandHandler(["start", "recommencer", "vente"], debut),
+            MessageHandler(f_recommencer, debut),
         ],
         allow_reentry=True,
     )
 )
 tg.add_handler(CommandHandler("annuler", annuler))
+tg.add_handler(MessageHandler(f_annuler & filters.ChatType.PRIVATE, annuler))
 tg.add_handler(CommandHandler("mesventes", mes_ventes))
 tg.add_handler(CommandHandler("recap", recap))
 tg.add_handler(CommandHandler("id", identifiant))
